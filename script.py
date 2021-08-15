@@ -44,7 +44,7 @@ class BruteForceThread(threading.Thread):
         with open(self.path, 'r') as f:
             for i in range(int(env.TRIES/env.THREAD_NUMBER)):
                 if env.FOUND == False:
-                    PSW = f.readline().strip()  # Getting password (1 ligne = 1 password)
+                    PSW = f.readline().strip()  # Getting password (1 line = 1 password)
                     # Finding base64 of the string user:psw
                     INFO = b64encode(f'{env.USER}:{PSW}'.encode()).decode()
                     env.ATTEMPT += 1
