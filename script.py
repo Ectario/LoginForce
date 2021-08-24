@@ -10,7 +10,7 @@ import time
 
 class Environnement():
     def __init__(self, tries):
-        self.URL = 'http://challenge01.root-me.org/web-serveur/ch3/' #'http://192.168.1.28'#
+        self.URL = 'http://url' #'http://192.168.1.28'#
         self.USER = 'admin'
         self.PATH = "rockyou.txt"  # Path of password list
         self.TMP_PATH = "./tmp/"  # Created during the runtime -> store the files for each Thread
