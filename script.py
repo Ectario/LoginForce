@@ -69,7 +69,7 @@ class BruteForceThread(threading.Thread):
                     try:
                         r = get(env.URL, headers={"Authorization": f"Basic {INFO}"})
                         s = r.status_code  # Answer code. 200 = 0K, 401 = Unauthorized
-                        if s == 200 or s == 301:  
+                        if s == 200 or s == 301 or s == 302:  
                             env.TRIES = i + 1
                             env.FLAG = PSW
                             env.FOUND = True
