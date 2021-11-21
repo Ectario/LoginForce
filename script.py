@@ -84,9 +84,6 @@ class BruteForceThread(threading.Thread):
                         if env.ERROR > 10:
                             print('[FATAL ERROR] Too much errors.')
                             sys.exit(-1)
-                else:
-                    f.close()   
-            f.close()
 
 
 def clean_tmp():
@@ -145,7 +142,6 @@ if __name__ == '__main__':
         for j in jobs:
             j.join()
 
-        info_thread.join()
     except KeyboardInterrupt:
         print("[STOPPED] Interrupted.")
         env.FOUND = None
